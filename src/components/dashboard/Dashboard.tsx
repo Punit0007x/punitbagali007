@@ -9,6 +9,7 @@ import { DistrictHeatmap } from "./DistrictHeatmap";
 import { AnomaliesTable } from "./AnomaliesTable";
 import { MethodologySection } from "./MethodologySection";
 import { Footer } from "./Footer";
+import { IndiaMap } from "./IndiaMap";
 import {
   TrendsChart,
   AgeAnalysisChart,
@@ -178,7 +179,15 @@ export function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
+            className="space-y-6"
           >
+            <ChartCard
+              title="Interactive India Map"
+              description="Click on a state to drill down into district-level data. Use zoom controls to navigate."
+              fullWidth
+            >
+              <IndiaMap />
+            </ChartCard>
             <ChartCard
               title="District Failure Rate Heatmap"
               description="Color-coded failure rates across all districts. Hover for detailed statistics."
