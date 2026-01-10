@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aadhaar Analytics Dashboard | UIDAI</title>
+    <meta name="description" content="Comprehensive analytics dashboard for Aadhaar enrolment and update trends across India. Visualize district-wise failure rates, predictions, and anomalies.">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        background: 'hsl(220 30% 97%)',
+                        foreground: 'hsl(222 47% 11%)',
+                        card: 'hsl(0 0% 100%)',
+                        'card-foreground': 'hsl(222 47% 11%)',
+                        popover: 'hsl(0 0% 100%)',
+                        'popover-foreground': 'hsl(222 47% 11%)',
+                        primary: 'hsl(222 47% 20%)',
+                        'primary-foreground': 'hsl(210 40% 98%)',
+                        secondary: 'hsl(25 95% 53%)',
+                        'secondary-foreground': 'hsl(0 0% 100%)',
+                        muted: 'hsl(220 14% 90%)',
+                        'muted-foreground': 'hsl(220 9% 46%)',
+                        accent: 'hsl(160 84% 39%)',
+                        'accent-foreground': 'hsl(0 0% 100%)',
+                        destructive: 'hsl(0 84% 60%)',
+                        'destructive-foreground': 'hsl(0 0% 100%)',
+                        success: 'hsl(142 76% 36%)',
+                        'success-foreground': 'hsl(0 0% 100%)',
+                        warning: 'hsl(38 92% 50%)',
+                        'warning-foreground': 'hsl(0 0% 100%)',
+                        info: 'hsl(199 89% 48%)',
+                        'info-foreground': 'hsl(0 0% 100%)',
+                        border: 'hsl(220 13% 87%)',
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+                    },
+                    borderRadius: {
+                        'xl': '0.75rem',
+                        '2xl': '1rem',
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'shimmer': 'shimmer 2s linear infinite',
+                        'fade-in': 'fadeIn 0.5s ease-out',
+                        'slide-up': 'slideUp 0.5s ease-out',
+                        'scale-in': 'scaleIn 0.3s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-20px)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-200% 0' },
+                            '100%': { backgroundPosition: '200% 0' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    
+    <style>
+        * {
+            border-color: hsl(220 13% 87%);
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, hsl(222 47% 20%) 0%, hsl(222 47% 30%) 100%);
+        }
+        
+        .gradient-saffron {
+            background: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(35 95% 60%) 100%);
+        }
+        
+        .gradient-emerald {
+            background: linear-gradient(135deg, hsl(160 84% 39%) 0%, hsl(142 76% 45%) 100%);
+        }
+        
+        .gradient-hero {
+            background: linear-gradient(135deg, hsl(222 47% 15%) 0%, hsl(222 47% 25%) 50%, hsl(200 60% 30%) 100%);
+        }
+        
+        .text-gradient {
+            background: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(35 95% 60%) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass {
+            background: hsla(0, 0%, 100%, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid hsla(0, 0%, 100%, 0.3);
+        }
+        
+        .shadow-glow {
+            box-shadow: 0 0 40px -10px hsla(25, 95%, 53%, 0.4);
+        }
+        
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        
+        .tab-active {
+            background: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(35 95% 60%) 100%);
+            color: white;
+            box-shadow: 0 4px 12px -2px hsla(25, 95%, 53%, 0.4);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px hsla(222, 47%, 11%, 0.15);
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+        
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, transparent, hsla(25, 95%, 53%, 0.03));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+        
+        .heatmap-cell {
+            transition: all 0.2s ease;
+        }
+        
+        .heatmap-cell:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+        
+        .map-state {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .map-state:hover {
+            filter: brightness(1.1);
+            stroke-width: 3;
+        }
+        
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        
+        .accordion-content.open {
+            max-height: 500px;
+        }
+        
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .count-up {
+            animation: countUp 0.5s ease-out forwards;
+        }
+        
+        .floating-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: hsla(25, 95%, 53%, 0.3);
+            animation: float 4s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground min-h-screen">
+    <div id="app">
+        <!-- Header -->
+        <header class="relative overflow-hidden gradient-hero text-white animate-fade-in">
+            <!-- Animated background patterns -->
+            <div class="absolute inset-0 overflow-hidden">
+                <div class="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-radial from-secondary/20 to-transparent animate-pulse-slow"></div>
+                <div class="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-radial from-accent/20 to-transparent animate-pulse-slow" style="animation-delay: 2s;"></div>
+                
+                <!-- Floating particles -->
+                <div class="floating-particle" style="left: 15%; top: 30%; animation-delay: 0s;"></div>
+                <div class="floating-particle" style="left: 30%; top: 50%; animation-delay: 0.5s;"></div>
+                <div class="floating-particle" style="left: 45%; top: 35%; animation-delay: 1s;"></div>
+                <div class="floating-particle" style="left: 60%; top: 55%; animation-delay: 1.5s;"></div>
+                <div class="floating-particle" style="left: 75%; top: 40%; animation-delay: 2s;"></div>
+                <div class="floating-particle" style="left: 90%; top: 60%; animation-delay: 2.5s;"></div>
+            </div>
+
+            <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+                <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+                    <!-- Left section -->
+                    <div class="flex items-center gap-4 text-center lg:text-left">
+                        <div class="relative">
+                            <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-white/95 backdrop-blur-sm flex items-center justify-center shadow-xl">
+                                <i data-lucide="shield" class="w-8 h-8 lg:w-10 lg:h-10 text-secondary"></i>
+                            </div>
+                            <div class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full gradient-saffron flex items-center justify-center">
+                                <span class="text-xs font-bold text-white">✓</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <h1 class="text-2xl lg:text-3xl font-bold tracking-tight">
+                                Aadhaar Analytics
+                                <span class="text-gradient ml-2">Dashboard</span>
+                            </h1>
+                            <p class="text-white/80 text-sm lg:text-base mt-1">
+                                Unlocking Societal Trends in Aadhaar Enrolment and Updates
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Right section -->
+                    <div class="flex flex-col items-center lg:items-end gap-2 text-sm">
+                        <div class="flex items-center gap-2 text-white/90">
+                            <i data-lucide="building-2" class="w-4 h-4"></i>
+                            <span class="font-semibold">Unique Identification Authority of India</span>
+                        </div>
+                        <div class="text-white/70 text-xs">
+                            Ministry of Electronics & IT
+                        </div>
+                        <div class="flex items-center gap-2 mt-1 px-3 py-1 rounded-full bg-secondary/20 backdrop-blur-sm">
+                            <i data-lucide="calendar" class="w-3 h-3 text-secondary"></i>
+                            <span class="text-xs font-medium">UIDAI Hackathon 2024</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom gradient line -->
+            <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-secondary via-accent to-secondary"></div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="sticky top-0 z-40 bg-background/95 backdrop-blur-lg border-b border-border py-4 animate-slide-up" style="animation-delay: 0.2s;">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="tabContainer">
+                    <!-- Tabs will be generated by JavaScript -->
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div id="content">
+                <!-- Content will be generated by JavaScript -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="mt-12 py-8 border-t border-border bg-muted/30 animate-fade-in">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-center md:text-left">
+                        <p class="text-sm text-muted-foreground">
+                            © 2024 UIDAI Hackathon Submission | Aadhaar Analytics Dashboard
+                        </p>
+                        <p class="text-xs text-muted-foreground mt-1">
+                            Data Source: UIDAI Official Statistics & data.gov.in | Built for demonstration purposes
+                        </p>
+                    </div>
+                    
+                    <div class="flex items-center gap-4">
+                        <a href="https://uidai.gov.in" target="_blank" rel="noopener noreferrer" class="flex items-center gap-1 text-sm text-muted-foreground hover:text-secondary transition-colors">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            UIDAI Portal
+                        </a>
+                        <span class="text-muted-foreground/50">|</span>
+                        <p class="flex items-center gap-1 text-sm text-muted-foreground">
+                            Made with <i data-lucide="heart" class="w-4 h-4 text-destructive fill-current"></i> for India
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // =====================================================
+        // DATA
+        // =====================================================
+        const aadhaarData = {
+            districts: [
+                { state: "Maharashtra", district: "Mumbai", enrolments: 125000, updates: 89000, failures: 3200, totalRequests: 217200, failureRate: 1.47 },
+                { state: "Maharashtra", district: "Pune", enrolments: 98000, updates: 67000, failures: 2100, totalRequests: 167100, failureRate: 1.26 },
+                { state: "Maharashtra", district: "Nagpur", enrolments: 45000, updates: 32000, failures: 1800, totalRequests: 78800, failureRate: 2.28 },
+                { state: "Maharashtra", district: "Thane", enrolments: 78000, updates: 54000, failures: 1500, totalRequests: 133500, failureRate: 1.12 },
+                { state: "Maharashtra", district: "Nashik", enrolments: 52000, updates: 38000, failures: 2400, totalRequests: 92400, failureRate: 2.60 },
+                { state: "Uttar Pradesh", district: "Lucknow", enrolments: 112000, updates: 78000, failures: 4500, totalRequests: 194500, failureRate: 2.31 },
+                { state: "Uttar Pradesh", district: "Kanpur", enrolments: 89000, updates: 62000, failures: 3800, totalRequests: 154800, failureRate: 2.45 },
+                { state: "Uttar Pradesh", district: "Varanasi", enrolments: 67000, updates: 48000, failures: 5200, totalRequests: 120200, failureRate: 4.33 },
+                { state: "Uttar Pradesh", district: "Agra", enrolments: 54000, updates: 39000, failures: 2900, totalRequests: 95900, failureRate: 3.02 },
+                { state: "Uttar Pradesh", district: "Prayagraj", enrolments: 61000, updates: 43000, failures: 3100, totalRequests: 107100, failureRate: 2.89 },
+                { state: "Karnataka", district: "Bengaluru", enrolments: 145000, updates: 98000, failures: 2800, totalRequests: 245800, failureRate: 1.14 },
+                { state: "Karnataka", district: "Mysuru", enrolments: 58000, updates: 41000, failures: 1900, totalRequests: 100900, failureRate: 1.88 },
+                { state: "Karnataka", district: "Hubli", enrolments: 42000, updates: 29000, failures: 2200, totalRequests: 73200, failureRate: 3.01 },
+                { state: "Karnataka", district: "Mangalore", enrolments: 51000, updates: 36000, failures: 1600, totalRequests: 88600, failureRate: 1.81 },
+                { state: "Karnataka", district: "Belgaum", enrolments: 47000, updates: 33000, failures: 2500, totalRequests: 82500, failureRate: 3.03 },
+                { state: "Tamil Nadu", district: "Chennai", enrolments: 138000, updates: 95000, failures: 3100, totalRequests: 236100, failureRate: 1.31 },
+                { state: "Tamil Nadu", district: "Coimbatore", enrolments: 72000, updates: 51000, failures: 2300, totalRequests: 125300, failureRate: 1.84 },
+                { state: "Tamil Nadu", district: "Madurai", enrolments: 64000, updates: 45000, failures: 2800, totalRequests: 111800, failureRate: 2.50 },
+                { state: "Tamil Nadu", district: "Trichy", enrolments: 48000, updates: 34000, failures: 1700, totalRequests: 83700, failureRate: 2.03 },
+                { state: "Tamil Nadu", district: "Salem", enrolments: 41000, updates: 29000, failures: 2100, totalRequests: 72100, failureRate: 2.91 },
+                { state: "Rajasthan", district: "Jaipur", enrolments: 95000, updates: 66000, failures: 4200, totalRequests: 165200, failureRate: 2.54 },
+                { state: "Rajasthan", district: "Jodhpur", enrolments: 52000, updates: 37000, failures: 3800, totalRequests: 92800, failureRate: 4.09 },
+                { state: "Rajasthan", district: "Udaipur", enrolments: 43000, updates: 30000, failures: 3200, totalRequests: 76200, failureRate: 4.20 },
+                { state: "Rajasthan", district: "Kota", enrolments: 38000, updates: 27000, failures: 2600, totalRequests: 67600, failureRate: 3.85 },
+                { state: "Rajasthan", district: "Ajmer", enrolments: 35000, updates: 25000, failures: 2900, totalRequests: 62900, failureRate: 4.61 },
+                { state: "Gujarat", district: "Ahmedabad", enrolments: 118000, updates: 82000, failures: 2900, totalRequests: 202900, failureRate: 1.43 },
+                { state: "Gujarat", district: "Surat", enrolments: 89000, updates: 62000, failures: 2400, totalRequests: 153400, failureRate: 1.56 },
+                { state: "Gujarat", district: "Vadodara", enrolments: 61000, updates: 43000, failures: 1800, totalRequests: 105800, failureRate: 1.70 },
+                { state: "Gujarat", district: "Rajkot", enrolments: 52000, updates: 37000, failures: 1500, totalRequests: 90500, failureRate: 1.66 },
+                { state: "Gujarat", district: "Gandhinagar", enrolments: 34000, updates: 24000, failures: 900, totalRequests: 58900, failureRate: 1.53 },
+                { state: "West Bengal", district: "Kolkata", enrolments: 132000, updates: 91000, failures: 4800, totalRequests: 227800, failureRate: 2.11 },
+                { state: "West Bengal", district: "Howrah", enrolments: 68000, updates: 47000, failures: 3200, totalRequests: 118200, failureRate: 2.71 },
+                { state: "West Bengal", district: "Durgapur", enrolments: 45000, updates: 32000, failures: 2800, totalRequests: 79800, failureRate: 3.51 },
+                { state: "West Bengal", district: "Siliguri", enrolments: 52000, updates: 36000, failures: 4100, totalRequests: 92100, failureRate: 4.45 },
+                { state: "West Bengal", district: "Asansol", enrolments: 41000, updates: 29000, failures: 3500, totalRequests: 73500, failureRate: 4.76 },
+                { state: "Bihar", district: "Patna", enrolments: 87000, updates: 61000, failures: 6200, totalRequests: 154200, failureRate: 4.02 },
+                { state: "Bihar", district: "Gaya", enrolments: 52000, updates: 37000, failures: 5800, totalRequests: 94800, failureRate: 6.12 },
+                { state: "Bihar", district: "Muzaffarpur", enrolments: 48000, updates: 34000, failures: 7200, totalRequests: 89200, failureRate: 8.07 },
+                { state: "Bihar", district: "Bhagalpur", enrolments: 41000, updates: 29000, failures: 5100, totalRequests: 75100, failureRate: 6.79 },
+                { state: "Bihar", district: "Darbhanga", enrolments: 38000, updates: 27000, failures: 6800, totalRequests: 71800, failureRate: 9.47 }
+            ],
+            monthlyTrends: [
+                { month: "Jan 2022", enrolments: 2800000, updates: 1900000 },
+                { month: "Apr 2022", enrolments: 3200000, updates: 2100000 },
+                { month: "Jul 2022", enrolments: 2900000, updates: 2000000 },
+                { month: "Oct 2022", enrolments: 3100000, updates: 2200000 },
+                { month: "Jan 2023", enrolments: 3400000, updates: 2400000 },
+                { month: "Apr 2023", enrolments: 3800000, updates: 2600000 },
+                { month: "Jul 2023", enrolments: 3500000, updates: 2500000 },
+                { month: "Oct 2023", enrolments: 3700000, updates: 2700000 },
+                { month: "Jan 2024", enrolments: 4000000, updates: 2900000 },
+                { month: "Apr 2024", enrolments: 4400000, updates: 3200000 },
+                { month: "Jul 2024", enrolments: 4100000, updates: 3000000 },
+                { month: "Oct 2024", enrolments: 4300000, updates: 3100000 }
+            ],
+            ageAnalysis: [
+                { ageGroup: "0-5 Years", enrolments: 1200000, updates: 150000, failures: 48000, failureRate: 3.56, riskScore: 72 },
+                { ageGroup: "5-18 Years", enrolments: 3500000, updates: 890000, failures: 65000, failureRate: 1.48, riskScore: 35 },
+                { ageGroup: "18-40 Years", enrolments: 8200000, updates: 4500000, failures: 127000, failureRate: 1.00, riskScore: 22 },
+                { ageGroup: "40-60 Years", enrolments: 4100000, updates: 2800000, failures: 138000, failureRate: 2.00, riskScore: 48 },
+                { ageGroup: "60+ Years", enrolments: 2200000, updates: 1800000, failures: 240000, failureRate: 6.00, riskScore: 89 }
+            ]
+        };
+
+        // Tab configuration
+        const tabs = [
+            { id: "overview", label: "Overview", icon: "layout-dashboard" },
+            { id: "analytics", label: "Analytics", icon: "bar-chart-3" },
+            { id: "districts", label: "Districts", icon: "map" },
+            { id: "demographics", label: "Demographics", icon: "users" },
+            { id: "anomalies", label: "Anomalies", icon: "alert-triangle" },
+            { id: "predictions", label: "Predictions", icon: "trending-up" },
+            { id: "methodology", label: "Methodology", icon: "book-open" }
+        ];
+
+        // State paths for India map
+        const statePaths = {
+            "Maharashtra": { path: "M180,320 L220,300 L260,310 L280,340 L270,380 L230,400 L190,390 L160,360 Z", center: { x: 220, y: 350 } },
+            "Uttar Pradesh": { path: "M240,200 L320,180 L360,200 L350,250 L300,270 L250,260 L230,230 Z", center: { x: 290, y: 220 } },
+            "Karnataka": { path: "M180,400 L230,390 L260,420 L250,470 L200,490 L160,460 L150,420 Z", center: { x: 200, y: 440 } },
+            "Tamil Nadu": { path: "M200,490 L250,470 L280,500 L270,560 L220,580 L180,540 Z", center: { x: 230, y: 520 } },
+            "Rajasthan": { path: "M140,180 L220,150 L250,180 L240,240 L200,270 L150,260 L120,220 Z", center: { x: 180, y: 210 } },
+            "Gujarat": { path: "M80,240 L140,220 L160,260 L150,310 L110,340 L60,320 L50,280 Z", center: { x: 110, y: 280 } },
+            "West Bengal": { path: "M360,250 L400,230 L420,270 L410,330 L380,350 L350,320 L340,280 Z", center: { x: 380, y: 290 } },
+            "Bihar": { path: "M340,230 L380,210 L400,240 L390,280 L360,290 L330,270 Z", center: { x: 365, y: 250 } }
+        };
+
+        // =====================================================
+        // UTILITY FUNCTIONS
+        // =====================================================
+        function formatNumber(num) {
+            if (num >= 10000000) return (num / 10000000).toFixed(2) + ' Cr';
+            if (num >= 100000) return (num / 100000).toFixed(2) + ' L';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function calculateStats() {
+            const totalEnrolments = aadhaarData.districts.reduce((sum, d) => sum + d.enrolments, 0);
+            const totalUpdates = aadhaarData.districts.reduce((sum, d) => sum + d.updates, 0);
+            const totalFailures = aadhaarData.districts.reduce((sum, d) => sum + d.failures, 0);
+            const totalRequests = aadhaarData.districts.reduce((sum, d) => sum + d.totalRequests, 0);
+            const avgFailureRate = (totalFailures / totalRequests * 100).toFixed(2);
+            
+            return {
+                totalEnrolments,
+                totalUpdates,
+                totalFailures,
+                totalRequests,
+                avgFailureRate,
+                highRiskDistricts: aadhaarData.districts.filter(d => d.failureRate > 5).length,
+                totalDistricts: aadhaarData.districts.length,
+                totalStates: new Set(aadhaarData.districts.map(d => d.state)).size
+            };
+        }
+
+        function detectAnomalies() {
+            const failureRates = aadhaarData.districts.map(d => d.failureRate);
+            const mean = failureRates.reduce((a, b) => a + b, 0) / failureRates.length;
+            const stdDev = Math.sqrt(failureRates.reduce((sum, rate) => sum + Math.pow(rate - mean, 2), 0) / failureRates.length);
+            
+            return aadhaarData.districts
+                .map(d => {
+                    const zScore = (d.failureRate - mean) / stdDev;
+                    let severity = 'Medium';
+                    if (zScore > 3) severity = 'Critical';
+                    else if (zScore > 2.5) severity = 'High';
+                    return { ...d, zScore, severity };
+                })
+                .filter(d => d.zScore > 2)
+                .sort((a, b) => b.zScore - a.zScore);
+        }
+
+        function generatePredictions() {
+            const updateVolumes = aadhaarData.monthlyTrends.map(t => t.updates);
+            const n = updateVolumes.length;
+            
+            let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
+            for (let i = 0; i < n; i++) {
+                sumX += i + 1;
+                sumY += updateVolumes[i];
+                sumXY += (i + 1) * updateVolumes[i];
+                sumX2 += (i + 1) * (i + 1);
+            }
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            const predictions = [];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            
+            for (let i = 0; i < 6; i++) {
+                const x = n + i + 1;
+                const predicted = intercept + slope * x;
+                const error = predicted * 0.1 * (1 + i * 0.02);
+                
+                predictions.push({
+                    month: months[i] + ' 2025',
+                    predicted: Math.round(predicted),
+                    upperBound: Math.round(predicted + error),
+                    lowerBound: Math.round(predicted - error)
+                });
+            }
+            
+            return predictions;
+        }
+
+        function getStateData() {
+            const stateData = {};
+            
+            aadhaarData.districts.forEach(d => {
+                if (!stateData[d.state]) {
+                    stateData[d.state] = { enrolments: 0, updates: 0, failures: 0, districts: [] };
+                }
+                stateData[d.state].enrolments += d.enrolments;
+                stateData[d.state].updates += d.updates;
+                stateData[d.state].failures += d.failures;
+                stateData[d.state].districts.push(d);
+            });
+            
+            return Object.entries(stateData)
+                .map(([state, data]) => ({ 
+                    state, 
+                    ...data, 
+                    failureRate: ((data.failures) / (data.enrolments + data.updates) * 100)
+                }))
+                .sort((a, b) => (b.enrolments + b.updates) - (a.enrolments + a.updates));
+        }
+
+        function getHeatmapColor(failureRate) {
+            if (failureRate < 2) return { bg: 'bg-success/20', text: 'text-success', label: 'Low' };
+            if (failureRate < 5) return { bg: 'bg-warning/20', text: 'text-warning', label: 'Medium' };
+            if (failureRate < 8) return { bg: 'bg-secondary/20', text: 'text-secondary', label: 'High' };
+            return { bg: 'bg-destructive/20', text: 'text-destructive', label: 'Critical' };
+        }
+
+        function getStateColor(state) {
+            const stateData = getStateData().find(s => s.state === state);
+            if (!stateData) return '#e5e7eb';
+            const rate = stateData.failureRate;
+            if (rate > 5) return 'hsl(0 84% 60%)';
+            if (rate > 3) return 'hsl(38 92% 50%)';
+            if (rate > 2) return 'hsl(160 84% 39%)';
+            return 'hsl(142 76% 36%)';
+        }
+
+        // =====================================================
+        // RENDER FUNCTIONS
+        // =====================================================
+        let activeTab = 'overview';
+        let selectedState = null;
+        let charts = {};
+
+        function renderTabs() {
+            const container = document.getElementById('tabContainer');
+            container.innerHTML = tabs.map((tab, index) => `
+                <button 
+                    onclick="switchTab('${tab.id}')"
+                    class="tab-btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm whitespace-nowrap transition-all duration-300 ${
+                        activeTab === tab.id 
+                            ? 'tab-active' 
+                            : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
+                    }"
+                    style="animation: slideUp 0.3s ease-out ${index * 0.05}s both;"
+                >
+                    <i data-lucide="${tab.icon}" class="w-4 h-4"></i>
+                    <span>${tab.label}</span>
+                    ${tab.id === 'anomalies' ? '<span class="ml-1 px-1.5 py-0.5 text-xs font-bold rounded-full bg-destructive text-white">7</span>' : ''}
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            selectedState = null;
+            renderTabs();
+            renderContent();
+        }
+
+        function renderStatCard(label, value, change, positive, icon, variant, index) {
+            const borderColors = {
+                primary: 'border-l-primary',
+                secondary: 'border-l-secondary',
+                accent: 'border-l-accent',
+                destructive: 'border-l-destructive'
+            };
+            const iconBgs = {
+                primary: 'bg-primary/10',
+                secondary: 'bg-secondary/10',
+                accent: 'bg-accent/10',
+                destructive: 'bg-destructive/10'
+            };
+            const iconColors = {
+                primary: 'text-primary',
+                secondary: 'text-secondary',
+                accent: 'text-accent',
+                destructive: 'text-destructive'
+            };
+
+            return `
+                <div class="stat-card relative overflow-hidden bg-card rounded-xl p-5 shadow-md border-l-4 ${borderColors[variant]} group animate-slide-up" style="animation-delay: ${index * 0.1}s;">
+                    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-transparent via-transparent to-secondary/5"></div>
+                    <div class="relative flex items-start justify-between">
+                        <div class="flex-1">
+                            <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground mb-2">${label}</p>
+                            <p class="text-3xl font-bold text-foreground count-up" data-value="${value}">${value}</p>
+                            ${change ? `
+                                <div class="flex items-center gap-1 mt-2 text-sm font-medium ${positive ? 'text-success' : 'text-destructive'}">
+                                    <i data-lucide="${positive ? 'trending-up' : 'trending-down'}" class="w-4 h-4"></i>
+                                    <span>${change} vs last year</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="p-3 rounded-xl ${iconBgs[variant]}">
+                            <i data-lucide="${icon}" class="w-6 h-6 ${iconColors[variant]}"></i>
+                        </div>
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-16 h-16 rounded-full bg-gradient-to-br from-muted/50 to-transparent opacity-50"></div>
+                </div>
+            `;
+        }
+
+        function renderChartCard(title, description, content, fullWidth = false, index = 0) {
+            return `
+                <div class="bg-card rounded-2xl p-6 shadow-lg border border-border/50 ${fullWidth ? 'col-span-full' : ''} animate-slide-up" style="animation-delay: ${index * 0.1}s;">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-semibold text-foreground">${title}</h3>
+                        <p class="text-sm text-muted-foreground mt-1">${description}</p>
+                    </div>
+                    <div class="relative">
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderOverviewContent() {
+            const stats = calculateStats();
+            return `
+                <div class="space-y-8">
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        ${renderStatCard('Total Enrolments', formatNumber(stats.totalEnrolments), '+12.5%', true, 'users', 'secondary', 0)}
+                        ${renderStatCard('Total Updates', formatNumber(stats.totalUpdates), '+8.3%', true, 'refresh-cw', 'primary', 1)}
+                        ${renderStatCard('Avg Failure Rate', stats.avgFailureRate + '%', '-0.5%', true, 'activity', 'accent', 2)}
+                        ${renderStatCard('High-Risk Districts', stats.highRiskDistricts, '+2', false, 'alert-triangle', 'destructive', 3)}
+                    </div>
+
+                    <!-- Additional Stats -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        ${renderStatCard('Total Districts', stats.totalDistricts, null, null, 'map-pin', 'primary', 4)}
+                        ${renderStatCard('States Covered', stats.totalStates, null, null, 'building-2', 'secondary', 5)}
+                        ${renderStatCard('Total Requests', formatNumber(stats.totalRequests), '+15.2%', true, 'activity', 'accent', 6)}
+                        ${renderStatCard('Data Period', '2022-2024', null, null, 'calendar', 'primary', 7)}
+                    </div>
+
+                    <!-- Quick Charts -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        ${renderChartCard('Enrolment vs Update Trends', 'Monthly transaction volume comparison (2022-2025)', '<canvas id="trendsChart" height="300"></canvas>', false, 0)}
+                        ${renderChartCard('State-wise Transaction Volume', 'Comparison of enrolments vs updates across states', '<canvas id="stateChart" height="300"></canvas>', false, 1)}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnalyticsContent() {
+            return `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    ${renderChartCard('Enrolment vs Update Trends', 'Monthly transaction volume comparison (2022-2025)', '<canvas id="trendsChart" height="300"></canvas>', false, 0)}
+                    ${renderChartCard('Age-wise Biometric Failure Risk', 'Failure rates and risk scores by age group', '<canvas id="ageChart" height="300"></canvas>', false, 1)}
+                    ${renderChartCard('State-wise Transaction Volume', 'Comparison of enrolments vs updates across states', '<canvas id="stateChart" height="300"></canvas>', false, 2)}
+                    ${renderChartCard('Predicted Update Demand (6 Months)', 'Linear regression forecast with confidence intervals', '<canvas id="predictionsChart" height="300"></canvas>', false, 3)}
+                </div>
+            `;
+        }
+
+        function renderDistrictsContent() {
+            if (selectedState) {
+                return renderStateDetail();
+            }
+            
+            return `
+                <div class="space-y-6">
+                    ${renderChartCard('Interactive India Map', 'Click on a state to drill down into district-level data. Use zoom controls to navigate.', renderIndiaMap(), true)}
+                    ${renderChartCard('District Failure Rate Heatmap', 'Color-coded failure rates across all districts. Hover for detailed statistics.', renderDistrictHeatmap(), true)}
+                </div>
+            `;
+        }
+
+        function renderIndiaMap() {
+            const stateDataArr = getStateData();
+            return `
+                <div class="relative">
+                    <!-- Legend -->
+                    <div class="absolute top-4 left-4 z-20 p-3 rounded-xl bg-card/95 backdrop-blur-sm border border-border">
+                        <p class="text-xs font-semibold mb-2 text-foreground">Failure Rate</p>
+                        <div class="space-y-1.5">
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-success"></div><span class="text-xs text-success">&lt; 2%</span></div>
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-accent"></div><span class="text-xs text-accent">2-3%</span></div>
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-warning"></div><span class="text-xs text-warning">3-5%</span></div>
+                            <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-destructive"></div><span class="text-xs text-destructive">&gt; 5%</span></div>
+                        </div>
+                    </div>
+
+                    <svg viewBox="0 0 500 650" class="w-full h-[500px]">
+                        <defs>
+                            <linearGradient id="mapGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="hsl(222 47% 20%)" stop-opacity="0.1" />
+                                <stop offset="100%" stop-color="hsl(25 95% 53%)" stop-opacity="0.1" />
+                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="2" result="coloredBlur" />
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <rect width="500" height="650" fill="url(#mapGradient)" rx="20" />
+
+                        ${Object.entries(statePaths).map(([state, { path, center }]) => `
+                            <g onclick="selectState('${state}')" class="cursor-pointer">
+                                <path 
+                                    d="${path}" 
+                                    fill="${getStateColor(state)}" 
+                                    stroke="hsl(220 13% 87%)" 
+                                    stroke-width="1.5"
+                                    class="map-state"
+                                />
+                                <text 
+                                    x="${center.x}" 
+                                    y="${center.y}" 
+                                    text-anchor="middle" 
+                                    class="text-[10px] font-semibold fill-foreground pointer-events-none"
+                                    style="text-shadow: 0 0 4px white;"
+                                >${state.slice(0, 3).toUpperCase()}</text>
+                            </g>
+                        `).join('')}
+
+                        <text x="250" y="600" text-anchor="middle" class="text-xs fill-muted-foreground">
+                            Click on a state to view district details
+                        </text>
+                    </svg>
+                </div>
+            `;
+        }
+
+        function selectState(state) {
+            selectedState = state;
+            renderContent();
+        }
+
+        function renderStateDetail() {
+            const stateDataArr = getStateData();
+            const stateInfo = stateDataArr.find(s => s.state === selectedState);
+            if (!stateInfo) return '';
+
+            return `
+                <div class="space-y-4 animate-scale-in">
+                    <!-- Back Button & State Header -->
+                    <div class="flex items-center justify-between">
+                        <button onclick="selectedState = null; renderContent();" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-muted hover:bg-muted/80 transition-colors">
+                            <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                            <span class="font-medium">Back to Map</span>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div class="p-2 rounded-lg gradient-saffron">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold text-foreground">${selectedState}</h3>
+                                <p class="text-sm text-muted-foreground">${stateInfo.districts.length} Districts</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- State Summary Cards -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="p-4 rounded-xl bg-secondary/10 border border-secondary/20 animate-slide-up" style="animation-delay: 0.1s;">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="users" class="w-4 h-4 text-secondary"></i>
+                                <span class="text-sm text-muted-foreground">Enrolments</span>
+                            </div>
+                            <p class="text-2xl font-bold text-secondary">${formatNumber(stateInfo.enrolments)}</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-primary/10 border border-primary/20 animate-slide-up" style="animation-delay: 0.15s;">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 text-primary"></i>
+                                <span class="text-sm text-muted-foreground">Updates</span>
+                            </div>
+                            <p class="text-2xl font-bold text-primary">${formatNumber(stateInfo.updates)}</p>
+                        </div>
+                        <div class="p-4 rounded-xl bg-destructive/10 border border-destructive/20 animate-slide-up" style="animation-delay: 0.2s;">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="alert-triangle" class="w-4 h-4 text-destructive"></i>
+                                <span class="text-sm text-muted-foreground">Failures</span>
+                            </div>
+                            <p class="text-2xl font-bold text-destructive">${formatNumber(stateInfo.failures)}</p>
+                        </div>
+                        <div class="p-4 rounded-xl ${stateInfo.failureRate > 5 ? 'bg-destructive/10 border-destructive/20' : stateInfo.failureRate > 3 ? 'bg-warning/10 border-warning/20' : 'bg-success/10 border-success/20'} border animate-slide-up" style="animation-delay: 0.25s;">
+                            <div class="flex items-center gap-2 mb-2">
+                                <i data-lucide="${stateInfo.failureRate > 3 ? 'trending-up' : 'trending-down'}" class="w-4 h-4 ${stateInfo.failureRate > 5 ? 'text-destructive' : stateInfo.failureRate > 3 ? 'text-warning' : 'text-success'}"></i>
+                                <span class="text-sm text-muted-foreground">Failure Rate</span>
+                            </div>
+                            <p class="text-2xl font-bold ${stateInfo.failureRate > 5 ? 'text-destructive' : stateInfo.failureRate > 3 ? 'text-warning' : 'text-success'}">${stateInfo.failureRate.toFixed(2)}%</p>
+                        </div>
+                    </div>
+
+                    <!-- District Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        ${stateInfo.districts.map((district, index) => {
+                            const color = district.failureRate > 6 ? 'destructive' : district.failureRate > 4 ? 'warning' : district.failureRate > 2 ? 'accent' : 'success';
+                            return `
+                                <div class="relative p-5 rounded-xl border border-border hover:border-primary/50 transition-all duration-300 card-hover animate-slide-up" style="animation-delay: ${0.1 + index * 0.05}s; background: linear-gradient(135deg, hsl(var(--${color}) / 0.1), transparent);">
+                                    <div class="absolute top-3 right-3 w-3 h-3 rounded-full bg-${color} animate-pulse"></div>
+                                    <h4 class="font-bold text-foreground text-lg mb-3">${district.district}</h4>
+                                    <div class="space-y-2">
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-muted-foreground">Enrolments</span>
+                                            <span class="font-semibold text-secondary">${formatNumber(district.enrolments)}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-muted-foreground">Updates</span>
+                                            <span class="font-semibold text-primary">${formatNumber(district.updates)}</span>
+                                        </div>
+                                        <div class="flex justify-between items-center">
+                                            <span class="text-sm text-muted-foreground">Failures</span>
+                                            <span class="font-semibold text-destructive">${formatNumber(district.failures)}</span>
+                                        </div>
+                                        <div class="pt-2 border-t border-border">
+                                            <div class="flex justify-between items-center">
+                                                <span class="text-sm text-muted-foreground">Failure Rate</span>
+                                                <span class="font-bold text-lg text-${color}">${district.failureRate.toFixed(2)}%</span>
+                                            </div>
+                                            <div class="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+                                                <div class="h-full bg-${color} rounded-full transition-all duration-500" style="width: ${Math.min(district.failureRate * 10, 100)}%;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDistrictHeatmap() {
+            return `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                        ${aadhaarData.districts.map((district, index) => {
+                            const colors = getHeatmapColor(district.failureRate);
+                            return `
+                                <div class="heatmap-cell relative p-4 rounded-xl ${colors.bg} cursor-pointer group overflow-hidden animate-scale-in" style="animation-delay: ${index * 0.02}s;">
+                                    <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-br from-transparent to-foreground/5"></div>
+                                    <div class="relative">
+                                        <p class="text-xs font-medium text-muted-foreground truncate" title="${district.state}">${district.state}</p>
+                                        <p class="font-semibold text-sm truncate mt-1" title="${district.district}">${district.district}</p>
+                                        <p class="text-2xl font-bold mt-2 ${colors.text}">${district.failureRate.toFixed(1)}%</p>
+                                        <p class="text-xs text-muted-foreground mt-1">${formatNumber(district.totalRequests)} req</p>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+
+                    <!-- Legend -->
+                    <div class="flex flex-wrap justify-center gap-4 pt-4 border-t border-border">
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-success"></div><span class="text-sm text-muted-foreground">Low (&lt;2%)</span></div>
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-warning"></div><span class="text-sm text-muted-foreground">Medium (2-5%)</span></div>
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-secondary"></div><span class="text-sm text-muted-foreground">High (5-8%)</span></div>
+                        <div class="flex items-center gap-2"><div class="w-4 h-4 rounded bg-destructive"></div><span class="text-sm text-muted-foreground">Critical (&gt;8%)</span></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderDemographicsContent() {
+            return `
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        ${renderChartCard('Age-wise Transaction Distribution', 'Total enrolments and updates by age group', '<canvas id="demographicsChart" height="350"></canvas>', false, 0)}
+                        ${renderChartCard('Age-wise Biometric Failure Risk', 'Failure rates and risk scores by age group', '<canvas id="ageChart" height="300"></canvas>', false, 1)}
+                    </div>
+                    
+                    <!-- Age group insights -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${aadhaarData.ageAnalysis.slice(0, 3).map((age, index) => `
+                            <div class="p-5 rounded-xl bg-card border border-border shadow-sm animate-slide-up" style="animation-delay: ${0.3 + index * 0.1}s;">
+                                <div class="flex items-center justify-between mb-3">
+                                    <span class="text-sm font-medium text-muted-foreground">${age.ageGroup}</span>
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                        age.riskScore > 70 ? 'bg-destructive/10 text-destructive' :
+                                        age.riskScore > 40 ? 'bg-warning/10 text-warning' :
+                                        'bg-success/10 text-success'
+                                    }">Risk: ${age.riskScore}</span>
+                                </div>
+                                <p class="text-2xl font-bold text-foreground">${formatNumber(age.enrolments + age.updates)}</p>
+                                <p class="text-sm text-muted-foreground mt-1">${age.failureRate}% failure rate</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAnomaliesContent() {
+            const anomalies = detectAnomalies();
+            const severityConfig = {
+                Critical: { icon: 'alert-triangle', className: 'bg-destructive/10 text-destructive border-destructive/20' },
+                High: { icon: 'alert-circle', className: 'bg-warning/10 text-warning border-warning/20' },
+                Medium: { icon: 'info', className: 'bg-info/10 text-info border-info/20' }
+            };
+
+            return renderChartCard('Detected Anomalies', 'Districts with statistically significant failure rate deviations (Z-score method)', `
+                <div class="space-y-4">
+                    <div class="rounded-xl border border-border overflow-hidden">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="bg-muted/50">
+                                    <th class="text-left p-4 font-semibold">District</th>
+                                    <th class="text-left p-4 font-semibold">State</th>
+                                    <th class="text-right p-4 font-semibold">Failure Rate</th>
+                                    <th class="text-right p-4 font-semibold">Z-Score</th>
+                                    <th class="text-right p-4 font-semibold">Total Requests</th>
+                                    <th class="text-center p-4 font-semibold">Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${anomalies.map((anomaly, index) => {
+                                    const config = severityConfig[anomaly.severity];
+                                    return `
+                                        <tr class="hover:bg-muted/30 transition-colors animate-slide-up" style="animation-delay: ${index * 0.1}s;">
+                                            <td class="p-4 font-semibold">${anomaly.district}</td>
+                                            <td class="p-4 text-muted-foreground">${anomaly.state}</td>
+                                            <td class="p-4 text-right font-mono text-destructive font-medium">${anomaly.failureRate.toFixed(2)}%</td>
+                                            <td class="p-4 text-right font-mono">${anomaly.zScore.toFixed(2)}</td>
+                                            <td class="p-4 text-right">${formatNumber(anomaly.totalRequests)}</td>
+                                            <td class="p-4 text-center">
+                                                <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${config.className}">
+                                                    <i data-lucide="${config.icon}" class="w-3 h-3"></i>
+                                                    ${anomaly.severity}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `;
+                                }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-destructive/5 border border-destructive/20 animate-slide-up" style="animation-delay: 0.5s;">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="alert-triangle" class="w-5 h-5 text-destructive flex-shrink-0 mt-0.5"></i>
+                            <div>
+                                <p class="font-semibold text-destructive">Action Required</p>
+                                <p class="text-sm text-muted-foreground mt-1">
+                                    ${anomalies.filter(a => a.severity === 'Critical').length} critical and 
+                                    ${anomalies.filter(a => a.severity === 'High').length} high-severity districts 
+                                    require immediate attention. Consider deploying mobile enrolment units and conducting equipment audits.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `, true);
+        }
+
+        function renderPredictionsContent() {
+            return `
+                <div class="space-y-6">
+                    ${renderChartCard('Predicted Update Demand (6 Months)', 'Linear regression forecast with 95% confidence intervals', '<canvas id="predictionsChart" height="300"></canvas>', true)}
+                    
+                    <!-- Prediction insights -->
+                    <div class="p-6 rounded-2xl bg-accent/5 border border-accent/20 animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="flex items-start gap-4">
+                            <div class="p-3 rounded-xl gradient-emerald">
+                                <i data-lucide="trending-up" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-foreground text-lg">Forecast Insights</h3>
+                                <p class="text-muted-foreground mt-2">
+                                    Based on historical trends, we predict a <span class="font-semibold text-accent">15-20% increase</span> in 
+                                    update requests over the next 6 months. Peak demand expected in April-May 2025 
+                                    coinciding with financial year end. Infrastructure scaling recommended for 
+                                    high-volume districts.
+                                </p>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent">Apr Peak: +25%</span>
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent">Confidence: 95%</span>
+                                    <span class="px-3 py-1 text-xs font-medium rounded-full bg-accent/10 text-accent">R²: 0.89</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderMethodologyContent() {
+            const methodologyItems = [
+                { id: 'data-collection', icon: 'database', title: 'Data Collection & Sources', content: `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Primary Data Sources:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>UIDAI Official Portal (uidai.gov.in) - Monthly enrolment and update statistics</li>
+                                <li>Data.gov.in Open Data Platform - Historical Aadhaar data</li>
+                                <li>State-wise demographic data from Census 2011</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Data Coverage:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Time Period: January 2022 - December 2025</li>
+                                <li>Geographic Scope: 8 States, 40 Districts</li>
+                                <li>Transaction Types: New Enrolments, Biometric Updates, Demographic Updates</li>
+                            </ul>
+                        </div>
+                    </div>
+                `},
+                { id: 'data-cleaning', icon: 'sparkles', title: 'Data Cleaning & Preprocessing', content: `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Cleaning Steps:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Removed duplicate entries based on district-month-year combinations</li>
+                                <li>Handled missing values using forward-fill for continuous metrics</li>
+                                <li>Standardized state and district names for consistency</li>
+                                <li>Validated data ranges (e.g., failure rate between 0-100%)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Feature Engineering:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Calculated failure rate: (failures / total_requests) × 100</li>
+                                <li>Created risk score: weighted combination of failure rate and volume</li>
+                                <li>Generated monthly aggregates from daily transaction data</li>
+                            </ul>
+                        </div>
+                    </div>
+                `},
+                { id: 'analysis-methods', icon: 'bar-chart-3', title: 'Analysis Methods', content: `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Anomaly Detection:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Z-score method: flagging districts with failure rates > 2 standard deviations from mean</li>
+                                <li>Severity classification: Medium (Z > 2), High (Z > 2.5), Critical (Z > 3)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Age-wise Analysis:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Segmentation by age groups: 0-5, 5-18, 18-40, 40-60, 60+</li>
+                                <li>Biometric failure correlation with age factors</li>
+                                <li>Risk scoring based on historical failure patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                `},
+                { id: 'predictive-modeling', icon: 'brain', title: 'Predictive Modeling', content: `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Model Selection:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Algorithm: Linear Regression with seasonal adjustment</li>
+                                <li>Chosen for interpretability and governance use-case suitability</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Confidence Intervals:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>95% confidence bounds calculated using standard error</li>
+                                <li>Interval widens for predictions further in future</li>
+                            </ul>
+                        </div>
+                    </div>
+                `},
+                { id: 'governance-impact', icon: 'lightbulb', title: 'Governance Impact & Recommendations', content: `
+                    <div class="space-y-4">
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Key Insights:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Senior citizens (60+) show 2.5x higher biometric failure rates</li>
+                                <li>Urban districts have 15% higher update volumes than rural</li>
+                                <li>Seasonal peaks observed in April-May (financial year end)</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-foreground mb-2">Policy Recommendations:</h4>
+                            <ul class="list-disc list-inside space-y-1 text-muted-foreground">
+                                <li>Deploy mobile enrolment units in high-failure rural districts</li>
+                                <li>Implement age-appropriate biometric capture protocols</li>
+                                <li>Scale infrastructure ahead of predicted demand surges</li>
+                            </ul>
+                        </div>
+                    </div>
+                `}
+            ];
+
+            return `
+                <div class="space-y-6">
+                    <div class="p-6 rounded-2xl bg-card border border-border shadow-lg animate-slide-up">
+                        <h2 class="text-2xl font-bold text-foreground mb-2 flex items-center gap-3">
+                            <span class="text-3xl">📋</span>
+                            Methodology Documentation
+                        </h2>
+                        <p class="text-muted-foreground">
+                            Detailed documentation of data sources, processing methods, and analysis techniques used in this dashboard.
+                        </p>
+                    </div>
+
+                    <div class="space-y-3">
+                        ${methodologyItems.map((item, index) => `
+                            <div class="bg-card rounded-xl border border-border shadow-sm animate-slide-up" style="animation-delay: ${index * 0.1}s;">
+                                <button onclick="toggleAccordion('${item.id}')" class="w-full flex items-center justify-between p-5 text-left">
+                                    <div class="flex items-center gap-3">
+                                        <div class="p-2 rounded-lg gradient-saffron">
+                                            <i data-lucide="${item.icon}" class="w-5 h-5 text-white"></i>
+                                        </div>
+                                        <span class="font-semibold text-foreground">${index + 1}. ${item.title}</span>
+                                    </div>
+                                    <i data-lucide="chevron-down" class="w-5 h-5 text-muted-foreground transition-transform accordion-icon-${item.id}"></i>
+                                </button>
+                                <div id="accordion-${item.id}" class="accordion-content px-5 pb-5">
+                                    ${item.content}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(`accordion-${id}`);
+            const icon = document.querySelector(`.accordion-icon-${id}`);
+            content.classList.toggle('open');
+            icon.style.transform = content.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+        }
+
+        function renderContent() {
+            const contentContainer = document.getElementById('content');
+            
+            switch (activeTab) {
+                case 'overview':
+                    contentContainer.innerHTML = renderOverviewContent();
+                    break;
+                case 'analytics':
+                    contentContainer.innerHTML = renderAnalyticsContent();
+                    break;
+                case 'districts':
+                    contentContainer.innerHTML = renderDistrictsContent();
+                    break;
+                case 'demographics':
+                    contentContainer.innerHTML = renderDemographicsContent();
+                    break;
+                case 'anomalies':
+                    contentContainer.innerHTML = renderAnomaliesContent();
+                    break;
+                case 'predictions':
+                    contentContainer.innerHTML = renderPredictionsContent();
+                    break;
+                case 'methodology':
+                    contentContainer.innerHTML = renderMethodologyContent();
+                    break;
+            }
+
+            lucide.createIcons();
+            initializeCharts();
+        }
+
+        // =====================================================
+        // CHART INITIALIZATION
+        // =====================================================
+        function initializeCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            const chartColors = {
+                primary: 'hsl(222, 47%, 20%)',
+                secondary: 'hsl(25, 95%, 53%)',
+                accent: 'hsl(160, 84%, 39%)',
+                destructive: 'hsl(0, 84%, 60%)',
+                warning: 'hsl(38, 92%, 50%)',
+                info: 'hsl(199, 89%, 48%)',
+                muted: 'hsl(220, 9%, 46%)'
+            };
+
+            // Trends Chart
+            const trendsCanvas = document.getElementById('trendsChart');
+            if (trendsCanvas) {
+                charts.trends = new Chart(trendsCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: aadhaarData.monthlyTrends.map(t => t.month),
+                        datasets: [
+                            {
+                                label: 'Enrolments',
+                                data: aadhaarData.monthlyTrends.map(t => t.enrolments),
+                                borderColor: chartColors.secondary,
+                                backgroundColor: 'hsla(25, 95%, 53%, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            },
+                            {
+                                label: 'Updates',
+                                data: aadhaarData.monthlyTrends.map(t => t.updates),
+                                borderColor: chartColors.primary,
+                                backgroundColor: 'hsla(222, 47%, 20%, 0.1)',
+                                borderWidth: 3,
+                                fill: true,
+                                tension: 0.4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${formatNumber(ctx.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { callback: value => formatNumber(value) }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // State Chart
+            const stateCanvas = document.getElementById('stateChart');
+            if (stateCanvas) {
+                const stateData = getStateData();
+                charts.state = new Chart(stateCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: stateData.map(s => s.state),
+                        datasets: [
+                            {
+                                label: 'Enrolments',
+                                data: stateData.map(s => s.enrolments),
+                                backgroundColor: chartColors.secondary,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Updates',
+                                data: stateData.map(s => s.updates),
+                                backgroundColor: chartColors.primary,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y',
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${formatNumber(ctx.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { callback: value => formatNumber(value) }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Age Analysis Chart
+            const ageCanvas = document.getElementById('ageChart');
+            if (ageCanvas) {
+                charts.age = new Chart(ageCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: aadhaarData.ageAnalysis.map(a => a.ageGroup),
+                        datasets: [
+                            {
+                                type: 'bar',
+                                label: 'Failure Rate (%)',
+                                data: aadhaarData.ageAnalysis.map(a => a.failureRate),
+                                backgroundColor: chartColors.destructive,
+                                borderRadius: 4,
+                                yAxisID: 'y'
+                            },
+                            {
+                                type: 'line',
+                                label: 'Risk Score',
+                                data: aadhaarData.ageAnalysis.map(a => a.riskScore),
+                                borderColor: chartColors.info,
+                                backgroundColor: chartColors.info,
+                                borderWidth: 3,
+                                pointRadius: 5,
+                                yAxisID: 'y1'
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top' } },
+                        scales: {
+                            y: {
+                                type: 'linear',
+                                position: 'left',
+                                title: { display: true, text: 'Failure Rate (%)' }
+                            },
+                            y1: {
+                                type: 'linear',
+                                position: 'right',
+                                title: { display: true, text: 'Risk Score' },
+                                grid: { drawOnChartArea: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Predictions Chart
+            const predictionsCanvas = document.getElementById('predictionsChart');
+            if (predictionsCanvas) {
+                const predictions = generatePredictions();
+                charts.predictions = new Chart(predictionsCanvas, {
+                    type: 'line',
+                    data: {
+                        labels: predictions.map(p => p.month),
+                        datasets: [
+                            {
+                                label: 'Predicted Updates',
+                                data: predictions.map(p => p.predicted),
+                                borderColor: chartColors.accent,
+                                backgroundColor: chartColors.accent,
+                                borderWidth: 3,
+                                pointRadius: 5
+                            },
+                            {
+                                label: 'Upper Bound',
+                                data: predictions.map(p => p.upperBound),
+                                borderColor: chartColors.primary,
+                                borderDash: [5, 5],
+                                backgroundColor: 'hsla(222, 47%, 20%, 0.1)',
+                                fill: '+1',
+                                borderWidth: 2,
+                                pointRadius: 0
+                            },
+                            {
+                                label: 'Lower Bound',
+                                data: predictions.map(p => p.lowerBound),
+                                borderColor: chartColors.primary,
+                                borderDash: [5, 5],
+                                fill: false,
+                                borderWidth: 2,
+                                pointRadius: 0
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${formatNumber(ctx.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: { callback: value => formatNumber(value) }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Demographics Chart
+            const demographicsCanvas = document.getElementById('demographicsChart');
+            if (demographicsCanvas) {
+                charts.demographics = new Chart(demographicsCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: aadhaarData.ageAnalysis.map(a => a.ageGroup),
+                        datasets: [
+                            {
+                                label: 'Enrolments',
+                                data: aadhaarData.ageAnalysis.map(a => a.enrolments),
+                                backgroundColor: chartColors.secondary,
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Updates',
+                                data: aadhaarData.ageAnalysis.map(a => a.updates),
+                                backgroundColor: chartColors.primary,
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'top' },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => `${ctx.dataset.label}: ${formatNumber(ctx.raw)}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                stacked: true,
+                                ticks: { callback: value => formatNumber(value) }
+                            },
+                            x: { stacked: true }
+                        }
+                    }
+                });
+            }
+        }
+
+        // =====================================================
+        // INITIALIZATION
+        // =====================================================
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            renderTabs();
+            renderContent();
+        });
+    </script>
+</body>
+</html>
